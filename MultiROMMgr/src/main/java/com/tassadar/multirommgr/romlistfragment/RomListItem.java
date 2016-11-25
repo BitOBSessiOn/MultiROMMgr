@@ -18,6 +18,7 @@
 package com.tassadar.multirommgr.romlistfragment;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageButton;
@@ -79,8 +80,18 @@ public class RomListItem extends LinearLayout implements View.OnClickListener {
         TextView t = (TextView)findViewById(R.id.rom_name);
         t.setText(rom.name);
 
+        TextView t2 = (TextView)findViewById(R.id.rom_partition_info);
+        t2.setText(rom.partition_info);
+
         View v = findViewById(R.id.erase_btn);
-        v.setVisibility((rom.type == Rom.ROM_PRIMARY) ? View.INVISIBLE : View.VISIBLE);
+        if(rom.active == 1) {
+            t.setTextColor(Color.BLUE);
+            v.setVisibility(View.INVISIBLE);
+        }
+        else {
+            t.setTextColor(Color.BLACK);
+            v.setVisibility((rom.type == Rom.ROM_PRIMARY) ? View.INVISIBLE : View.VISIBLE);
+        }
 
         ImageButton b = (ImageButton)findViewById(R.id.rom_icon);
         b.setImageDrawable(rom.getIcon());

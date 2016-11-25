@@ -17,8 +17,10 @@
 
 package com.tassadar.multirommgr;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.text.Html;
@@ -274,13 +276,43 @@ public class StatusAsyncTask extends AsyncTask <Void, String, StatusAsyncTask.Re
 
         Manifest man = m_res.manifest;
 
+/*
+        String AdditionalInfo = "";
+        if(m_res.multirom.has_apkL() && m_res.multirom.no_kexec())
+            AdditionalInfo = "<br><b>Additional Info:</b> apkL and no-kexec supported.";
+        else if(m_res.multirom.has_apkL())
+            AdditionalInfo = "<br><b>Additional Info:</b> apkL supported.";
+        else if(m_res.multirom.no_kexec())
+            AdditionalInfo = "<br><b>Additional Info:</b> no-kexec supported.";
+        else
+            AdditionalInfo = "";
+*/
+
         t = (TextView) l.findViewById(R.id.info_text);
         Spanned s = Html.fromHtml(t.getResources().getString(R.string.status_text,
                 m_res.multirom != null ? m_res.multirom.getVersion() : "N/A",
                 man != null && man.hasMultiromUpdate() ? update : "",
                 recovery_date != null ? recovery_date : "N/A",
                 man != null && man.hasRecoveryUpdate() ? update : "",
+                kexec_text
+/*
+                // don't want to modify status_text, so appending it to 'kexec_text'
+                + AdditionalInfo
+*/
+        ));
+
+/*
+<string name="status_text"><![CDATA[<b>MultiROM:</b> v%1$s%2$s<br><b>Recovery:</b> %3$s%4$s<br><b>Kernel:</b> %5$s]]></string>
+
+                m_res.multirom == null ? "N/A" : m_res.multirom.getVersion() +
+                        // <b>MultiROM:</b> v%1$s%2$s<br>
+                        // <b>MultiROM :</b>
+                        (m_res.multirom.has_apkL() ? " (with apkL support)" : " (apkL not implemented)"),
+                man != null && man.hasMultiromUpdate() ? update : "",
+                recovery_date != null ? recovery_date : "N/A",
+                man != null && man.hasRecoveryUpdate() ? update : "",
                 kexec_text));
+*/
         t.setText(s);
         t.setVisibility(View.VISIBLE);
 

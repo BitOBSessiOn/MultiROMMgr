@@ -199,6 +199,50 @@
             ]
         },
         {
+            "names": [ "pme", "pmeul", "htc_pmeul", "pmeuhl", "htc_pmeuhl", "pmewhl", "htc_pmewhl", "pmewl", "htc_pmewl" ],
+            "manifest_url": "http://multirom-htc.github.io/pme/manifest.json",
+            "check_gpg": false,
+            "ubuntu_touch": {
+                "enabled": false
+            },
+            "devices": [
+                {
+                    "name": "recovery",
+                    "path": "/dev/block/bootdevice/by-name/recovery"
+                },
+                {
+                    "name": "boot",
+                    "path": "/dev/block/bootdevice/by-name/boot"
+                },
+                {
+                    "name": "cache",
+                    "path": "/dev/block/bootdevice/by-name/cache"
+                }
+            ]
+        },
+        {
+            "names": [ "hima", "himaul", "htc_himaul", "himauhl", "htc_himauhl", "himamhl", "htc_himawhl", "himawl", "htc_himawl" ],
+            "manifest_url": "http://multirom-htc.github.io/hima/manifest.json",
+            "check_gpg": false,
+            "ubuntu_touch": {
+                "enabled": false
+            },
+            "devices": [
+                {
+                    "name": "recovery",
+                    "path": "/dev/block/bootdevice/by-name/recovery"
+                },
+                {
+                    "name": "boot",
+                    "path": "/dev/block/bootdevice/by-name/boot"
+                },
+                {
+                    "name": "cache",
+                    "path": "/dev/block/bootdevice/by-name/cache"
+                }
+            ]
+        },
+        {
              "names": [ "htc_m8", "m8", "m8ul", "m8whl", "m8wl", "m8spr", "m8vzw", "htc_m8whl", "htc_m8wl", "m8_ul", "m8_whl", "m8_wl" ],
              "manifest_url": "http://multirom-htc.github.io/manifest.json",
              "check_gpg": false,
@@ -696,6 +740,29 @@
                 {
                     "name": "cache",
                     "path": "/dev/block/platform/soc.0/f9824900.sdhci/by-name/cache"
+                }
+            ]
+        },
+        {
+            "names": [ "huashan", "C5302", "C5303", "C5306" ],
+            "manifest_url": "http://xperiamultirom.github.io/manifests/huashan.json",
+            "check_gpg": false,
+            "kexec_check_path": "/sys/kernel/kexec_loaded",
+            "ubuntu_touch": {
+                "enabled": false
+            },
+            "devices": [
+                {
+                    "name": "recovery",
+                    "path": "/dev/block/platform/msm_sdcc.1/by-name/FOTAKernel"
+                },
+                {
+                    "name": "boot",
+                    "path": "/dev/block/platform/msm_sdcc.1/by-name/Kernel"
+                },
+                {
+                    "name": "cache",
+                    "path": "/dev/block/platform/msm_sdcc.1/by-name/Cache"
                 }
             ]
         }

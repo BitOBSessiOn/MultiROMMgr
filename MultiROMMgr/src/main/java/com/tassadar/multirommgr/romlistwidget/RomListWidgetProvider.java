@@ -129,6 +129,9 @@ public class RomListWidgetProvider extends AppWidgetProvider {
             if(!m.findMultiROMDir())
                 return;
 
+            if(!m.findVersion())
+                return;
+
             m.findRoms();
         }
     }

@@ -17,16 +17,30 @@
         android:paddingBottom="3dp"
         android:scaleType="fitCenter" />
 
-    <TextView
-        android:id="@+id/rom_name"
-        android:layout_width="0dp"
+    <LinearLayout
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:textStyle="bold"
-        android:textSize="20sp"
-        android:fontFamily="sans-serif-condensed"
-        android:singleLine="true"
-        android:ellipsize="middle"
-        android:textColor="#000"/>
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_weight="1">
+
+        <TextView
+            android:id="@+id/rom_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            android:fontFamily="sans-serif-condensed"
+            android:singleLine="true"
+            android:ellipsize="middle"
+            android:textColor="#000"/>
+
+        <TextView
+            android:id="@+id/rom_partition_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="10sp"
+            android:textColor="#777"/>
+
+    </LinearLayout>
 
 </LinearLayout>

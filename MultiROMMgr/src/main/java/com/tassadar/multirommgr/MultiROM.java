@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 import eu.chainfire.libsuperuser.Shell;
 
@@ -86,6 +87,27 @@ public class MultiROM {
 
         m_version = out.get(0);
         Log.d(TAG, "MultiROM version: " + m_version);
+
+        if (m_version.contains("apkL")) {
+            // legacy apkL support (this can be deleted, it was only a "Temp... will be deleted" on github)
+            int pos = m_version.indexOf("apkL");
+            if (m_version.length() > pos + 4)
+                m_apkL_version = Integer.valueOf(m_version.substring(pos + 4));
+            else
+                m_apkL_version = 1;
+            m_version = m_version.substring(0, pos - 1).trim();
+        }
+        else if (out.size() > 1 && out.get(1).contains("apkL")) {
+            // proper usage of apkL which mantains backwards compatibility with the non-apkL aware app
+            int pos = out.get(1).indexOf("apkL");
+            if (out.get(1).length() > pos + 4)
+                m_apkL_version = Integer.valueOf(out.get(1).substring(pos + 4));
+            else
+                m_apkL_version = 1;
+        }
+        else
+            m_apkL_version = 0;
+
         return true;
     }
 
@@ -95,6 +117,15 @@ public class MultiROM {
             return INTERNAL_ROM;
 
         String entry;
+
+        m_no_kexec = false;
+        for(int i = 0; i < out.size(); ++i) {
+            entry = out.get(i).trim();
+            if (entry.startsWith("no_kexec=")) {
+                m_no_kexec = true;
+            }
+        }
+
         for(int i = 0; i < out.size(); ++i) {
             entry = out.get(i).trim();
             if (entry.startsWith("int_display_name=")) {
@@ -106,32 +137,123 @@ public class MultiROM {
         return INTERNAL_ROM;
     }
 
+    public boolean find_no_kexec() {
+        findInternalRomName();
+        return m_no_kexec;
+    }
+
     public void findRoms() {
         String internal = findInternalRomName();
 
-        List<String> out = Shell.SU.run("\'%s/busybox\' ls -1 -p \"%s/roms/\"", m_path, m_path);
-        if (out == null || out.isEmpty())
-            return;
+        if (get_apkL_version() == 0) {
+            List<String> out = Shell.SU.run("\'%s/busybox\' ls -1 -p \"%s/roms/\"", m_path, m_path);
+            if (out == null || out.isEmpty())
+                return;
 
-        Rom rom;
-        int type;
-        String name;
+            Rom rom;
+            int type;
+            String name;
+            String base_path;
 
-        for(int i = 0; i < out.size(); ++i) {
-            name = out.get(i);
-            if(!name.endsWith("/"))
-                continue;
+            for(int i = 0; i < out.size(); ++i) {
+                name = out.get(i);
+                if(!name.endsWith("/"))
+                    continue;
 
-            name = name.substring(0, name.length() - 1);
-            if(name.equals(INTERNAL_ROM)) {
-                name = internal;
-                type = Rom.ROM_PRIMARY;
-            } else {
-                type = Rom.ROM_SECONDARY;
+                name = name.substring(0, name.length() - 1);
+                if(name.equals(INTERNAL_ROM)) {
+                    name = internal;
+                    type = Rom.ROM_PRIMARY;
+                } else {
+                    type = Rom.ROM_SECONDARY;
+                }
+
+                if (type == Rom.ROM_PRIMARY)
+                    base_path = m_path + "roms/" + INTERNAL_ROM;
+                else
+                    base_path = m_path + "roms/" + name;
+
+                rom = new Rom(name, type, 0, base_path, "", "", "", "", "");
+                m_roms.add(rom);
             }
+        }
+        else {
+            // let the multirom binary enumerate all roms (includes mounting external partitions and listing them too)
+            List<String> out = Shell.SU.run(m_path + "multirom -apkL");
+            if (out == null || out.isEmpty())
+                return;
 
-            rom = new Rom(name, type);
-            m_roms.add(rom);
+            Rom rom;
+            int type;
+            String name;
+
+            String RomInfoLine;
+            int p1, p2, p3, p4, p5, p6, p7, p8;
+
+            int active;
+            String base_path;
+            String icon_path;
+            String partition_name;
+            String partition_mount_path;
+            String partition_uuid;
+            String partition_fs;
+
+            for(int i = 0; i < out.size(); ++i) {
+                RomInfoLine = out.get(i);
+                // RomInfoLine format passed back by 'multirom -l'
+                // for internal storage ROMs (no partition info):
+                //    "ROM: name=%s base=%s icon=%s\n"
+                // for external ROMs (partition info needed for reboot):
+                //    "ROM: name=%s base=%s icon=%s part_name=%s part_mount=%s part_uuid=%s part_fs=%s\n"
+                // note that we actually don't need all the information, but might as well pass
+                // everything back for possible future uses.
+
+                if(!RomInfoLine.startsWith("ROM:"))
+                    continue;
+
+                if(RomInfoLine.startsWith("ROM:1"))
+                    active = 1;
+                else
+                    active = 0;
+
+                p1 = RomInfoLine.indexOf("name=");
+                p2 = RomInfoLine.indexOf("base=");
+                p3 = RomInfoLine.indexOf("icon=");
+
+                p4 = RomInfoLine.indexOf("part_name=");
+                if (p4 < 0) {
+                    p4 = RomInfoLine.length() + 1;
+
+                    partition_name       = "";
+                    partition_mount_path = "";
+                    partition_uuid       = "";
+                    partition_fs         = "";
+                } else {
+                    p5 = RomInfoLine.indexOf("part_mount=");
+                    p6 = RomInfoLine.indexOf("part_uuid=");
+                    p7 = RomInfoLine.indexOf("part_fs=");
+                    p8 = RomInfoLine.length() + 1;
+
+                    partition_name       = RomInfoLine.substring(p4 + 10, p5 - 1);
+                    partition_mount_path = RomInfoLine.substring(p5 + 11, p6 - 1);
+                    partition_uuid       = RomInfoLine.substring(p6 + 10, p7 - 1);
+                    partition_fs         = RomInfoLine.substring(p7 +  8, p8 - 1);
+                }
+
+                name      = RomInfoLine.substring(p1 +  5, p2-1);
+                base_path = RomInfoLine.substring(p2 +  5, p3-1);
+                icon_path = RomInfoLine.substring(p3 +  5, p4-1);
+
+                if(name.equals(INTERNAL_ROM)) {
+                    name = internal;
+                    type = Rom.ROM_PRIMARY;
+                } else {
+                    type = Rom.ROM_SECONDARY;
+                }
+
+                rom = new Rom(name, type, active, base_path, icon_path, partition_name, partition_mount_path, partition_uuid, partition_fs);
+                m_roms.add(rom);
+            }
         }
 
         Collections.sort(m_roms, new Rom.NameComparator());
@@ -141,17 +263,21 @@ public class MultiROM {
     }
 
     private void loadRomIconData() {
+        // Prepare all loaded ROM paths to be used in for loop
+        String list_of_rom_paths = "";
+        for(Rom rom : m_roms)
+            list_of_rom_paths += "\"" + rom.base_path + "\" ";
+
         // Load icon data
         List<String> out = Shell.SU.run(
                 "IFS=$'\\n'; " +
-                "cd \"%s/roms\"; " +
-                "for d in $(\"%s/busybox\" ls -1); do " +
+                "for d in %s; do " +
                 "    ([ ! -d \"$d\" ]) && continue;" +
                 "    ([ ! -f \"$d/.icon_data\" ]) && continue;" +
                 "    echo \"ROM:$d\";" +
                 "    cat \"$d/.icon_data\";" +
                 "done;",
-                m_path, m_path);
+                list_of_rom_paths);
 
         if (out == null || out.isEmpty())
             return;
@@ -170,9 +296,11 @@ public class MultiROM {
 
             line = line.substring(4);
 
-            type = line.equals(INTERNAL_ROM) ? Rom.ROM_PRIMARY : Rom.ROM_SECONDARY;
+            //name=Internal base=/data/media/0/multirom/roms/Internal
+            //compare to /multirom/roms/Internal, since externals would be on multirom-device/RomName
+            type = line.endsWith("/multirom/roms/" + INTERNAL_ROM) ? Rom.ROM_PRIMARY : Rom.ROM_SECONDARY;
             for(Rom r : m_roms) {
-                if (r.type == type && (type == Rom.ROM_PRIMARY || line.equals(r.name)))
+                if (r.type == type && (type == Rom.ROM_PRIMARY || line.equals(r.base_path)))
                     rom = r;
             }
 
@@ -213,6 +341,15 @@ public class MultiROM {
             vals[i] = new ContentValues();
             vals[i].put(RomListOpenHelper.KEY_NAME, rom.name);
             vals[i].put(RomListOpenHelper.KEY_TYPE, rom.type);
+            vals[i].put(RomListOpenHelper.KEY_ACTIVE, rom.active);
+            vals[i].put(RomListOpenHelper.KEY_BASE_PATH, rom.base_path);
+            vals[i].put(RomListOpenHelper.KEY_ICON_PATH, rom.icon_path);
+            vals[i].put(RomListOpenHelper.KEY_PARTITION_NAME, rom.partition_name);
+            vals[i].put(RomListOpenHelper.KEY_PARTITION_MOUNT_PATH, rom.partition_mount_path);
+            vals[i].put(RomListOpenHelper.KEY_PARTITION_UUID, rom.partition_uuid);
+            vals[i].put(RomListOpenHelper.KEY_PARTITION_FS, rom.partition_fs);
+            vals[i].put(RomListOpenHelper.KEY_PARTITION_INFO, rom.partition_info);
+
             if(rom.icon_hash != null)
                 vals[i].put(RomListOpenHelper.KEY_ICON_NAME, rom.icon_hash);
             else
@@ -264,7 +401,7 @@ public class MultiROM {
                     "fi",
                     m_path, m_path, m_path, new_name, new_name);
         } else {
-            Shell.SU.run("cd \"%s/roms/\" && mv '%s' '%s'", m_path, rom.name, new_name);
+            Shell.SU.run("cd \"%s/..\" && mv '%s' '%s'", rom.base_path, rom.name, new_name);
         }
     }
 
@@ -274,13 +411,16 @@ public class MultiROM {
             return;
         }
 
-        Shell.SU.run("'%s/busybox' chattr -R -i '%s/roms/%s'; '%s/busybox' rm -rf '%s/roms/%s'",
-                m_path, m_path, rom.name, m_path, m_path, rom.name);
+        Shell.SU.run("'%s/busybox' chattr -R -i '%s'; '%s/busybox' rm -rf '%s'",
+                m_path, rom.base_path, m_path, rom.base_path);
     }
 
     public void bootRom(Rom rom) {
         String name = (rom.type == Rom.ROM_PRIMARY) ? INTERNAL_ROM : rom.name;
-        Shell.SU.run("%s/multirom --boot-rom='%s'", m_path, name);
+        if (rom.partition_uuid.isEmpty())
+            Shell.SU.run("%s/multirom --boot-rom='%s'", m_path, name);
+        else
+            Shell.SU.run("%s/multirom --boot-rom='%s++uuid=%s'", m_path, name, rom.partition_uuid);
     }
 
     public boolean isKexecNeededFor(Rom rom) {
@@ -289,7 +429,7 @@ public class MultiROM {
 
         // if android ROM check for boot.img, else kexec
         List<String> out = Shell.SU.run(String.format(
-                "cd \"%s/roms/%s\"; " +
+                "cd \"%s\"; " +
                 "if [ -d boot ] && [ -d system ] && [ -d data ] && [ -d cache ]; then" +
                 "    if [ -e boot.img ]; then" +
                 "        echo kexec;" +
@@ -299,7 +439,7 @@ public class MultiROM {
                 "else" +
                 "    echo kexec;" +
                 "fi;",
-                m_path, rom.name));
+                rom.base_path));
 
         if (out == null || out.isEmpty()) {
             Log.e(TAG, "Failed to check for kexec in ROM " + rom.name);
@@ -464,10 +604,10 @@ public class MultiROM {
         }
 
         Shell.SU.run(
-                "cd '%s/roms/%s' && " +
-                "echo '%s' > .icon_data &&" +
-                "echo '%s' >> .icon_data"
-                , m_path, name, ic_type, data);
+                "cd '%s' && " +
+                        "echo '%s' > .icon_data &&" +
+                        "echo '%s' >> .icon_data"
+                , rom.base_path, ic_type, data);
 
         rom.icon_id = icon_id;
         rom.icon_hash = hash;
@@ -483,7 +623,15 @@ public class MultiROM {
 
         MgrApp.getCntnResolver().update(RomListDataProvider.CONTENT_URI, val,
                 RomListOpenHelper.KEY_NAME + "='" + rom.name + "' AND " +
-                RomListOpenHelper.KEY_TYPE + "=" + rom.type,
+                RomListOpenHelper.KEY_TYPE + "=" + rom.type  + " AND " +
+                RomListOpenHelper.KEY_ACTIVE + "=" + rom.active  + " AND " +
+                RomListOpenHelper.KEY_BASE_PATH + "='" + rom.base_path + "' AND " +
+                RomListOpenHelper.KEY_ICON_PATH + "='" + rom.icon_path + "' AND " +
+                RomListOpenHelper.KEY_PARTITION_NAME + "='" + rom.partition_name + "' AND " +
+                RomListOpenHelper.KEY_PARTITION_MOUNT_PATH + "='" + rom.partition_mount_path + "' AND " +
+                RomListOpenHelper.KEY_PARTITION_UUID + "='" + rom.partition_uuid + "' AND " +
+                RomListOpenHelper.KEY_PARTITION_FS + "='" + rom.partition_fs + "' AND " +
+                RomListOpenHelper.KEY_PARTITION_INFO + "='" + rom.partition_info  + "'",
                 null);
         RomListWidgetProvider.notifyChanged();
     }
@@ -491,11 +639,21 @@ public class MultiROM {
     public String getVersion() {
         return m_version;
     }
+    public int get_apkL_version() {
+        return m_apkL_version;
+    }
+    public boolean no_kexec() {
+        if (!m_no_kexec)
+            findInternalRomName(); // in case it's not setup, check again
+        return m_no_kexec;
+    }
     public String getPath() { return m_path; }
     public ArrayList<Rom> getRoms() { return m_roms; }
 
     private String m_path;
     private String m_version;
+    private int m_apkL_version;
+    private boolean m_no_kexec;
     private ArrayList<Rom> m_roms = new ArrayList<Rom>();
     private List<String> m_predefIcons;
 }

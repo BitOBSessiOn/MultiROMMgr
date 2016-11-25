@@ -28,6 +28,14 @@ public class RomListOpenHelper extends SQLiteOpenHelper {
     public static final String KEY_ID = "_ID";
     public static final String KEY_NAME = "name";
     public static final String KEY_TYPE = "type";
+    public static final String KEY_ACTIVE = "active";
+    public static final String KEY_BASE_PATH = "base_path";
+    public static final String KEY_ICON_PATH = "icon_path";
+    public static final String KEY_PARTITION_NAME = "partition_name";
+    public static final String KEY_PARTITION_MOUNT_PATH = "partition_mount_path";
+    public static final String KEY_PARTITION_UUID = "partition_uuid";
+    public static final String KEY_PARTITION_FS = "partition_fs";
+    public static final String KEY_PARTITION_INFO = "partition_info";
     public static final String KEY_ICON_NAME = "icon_name";
 
     private static final int DATABASE_VERSION = 1;
@@ -36,6 +44,14 @@ public class RomListOpenHelper extends SQLiteOpenHelper {
                     KEY_ID + " INTEGER PRIMARY KEY, " +
                     KEY_NAME + " TEXT, " +
                     KEY_TYPE + " INTEGER, " +
+                    KEY_ACTIVE + " INTEGER, " +
+                    KEY_BASE_PATH + " TEXT, " +
+                    KEY_ICON_PATH + " TEXT, " +
+                    KEY_PARTITION_NAME + " TEXT, " +
+                    KEY_PARTITION_MOUNT_PATH + " TEXT, " +
+                    KEY_PARTITION_UUID + " TEXT, " +
+                    KEY_PARTITION_FS + " TEXT, " +
+                    KEY_PARTITION_INFO + " TEXT, " +
                     KEY_ICON_NAME+ " TEXT" +
             ");";
 

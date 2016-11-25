@@ -21,10 +21,18 @@ public class RomBootActivity extends Activity {
             return;
 
         Bundle b = new Bundle();
-        b.putParcelable("rom", new Rom(i.getStringExtra(RomListOpenHelper.KEY_NAME),
-                i.getIntExtra(RomListOpenHelper.KEY_TYPE, 0)));
+        b.putParcelable("rom",
+                new Rom(i.getStringExtra(RomListOpenHelper.KEY_NAME),
+                        i.getIntExtra(RomListOpenHelper.KEY_TYPE, 0),
+                        i.getIntExtra(RomListOpenHelper.KEY_ACTIVE, 0),
+                        i.getStringExtra(RomListOpenHelper.KEY_BASE_PATH),
+                        i.getStringExtra(RomListOpenHelper.KEY_ICON_PATH),
+                        i.getStringExtra(RomListOpenHelper.KEY_PARTITION_NAME),
+                        i.getStringExtra(RomListOpenHelper.KEY_PARTITION_MOUNT_PATH),
+                        i.getStringExtra(RomListOpenHelper.KEY_PARTITION_UUID),
+                        i.getStringExtra(RomListOpenHelper.KEY_PARTITION_FS)));
 
-        RomBootDialog f = new RomBootDialog();
+                RomBootDialog f = new RomBootDialog();
         f.setArguments(b);
 
         FragmentManager mgr = getFragmentManager();

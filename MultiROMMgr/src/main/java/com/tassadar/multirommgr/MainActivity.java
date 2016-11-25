@@ -22,6 +22,7 @@ import android.app.AlertDialog;
 import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
@@ -57,6 +58,8 @@ public class MainActivity extends AppCompatActivity implements StatusAsyncTask.S
     public static final int ACT_UNINSTALL_MULTIROM = 5;
 
     public static final String INTENT_EXTRA_SHOW_ROM_LIST = "show_rom_list";
+
+    private static final int WRITE_EXTERNAL_PERM_REQUEST = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -135,6 +138,17 @@ public class MainActivity extends AppCompatActivity implements StatusAsyncTask.S
             selectItem(savedInstanceState.getInt("curFragment", 0));
         } else {
             selectItem(0);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if(requestCode == WRITE_EXTERNAL_PERM_REQUEST) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // ok can read/write storage
+            } else {
+                // permission was denied
+            }
         }
     }
 
@@ -272,6 +286,30 @@ public class MainActivity extends AppCompatActivity implements StatusAsyncTask.S
         StatusAsyncTask.instance().execute();
     }
 
+/*
+    public void java_really_sucks() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_PERM_REQUEST);
+        }
+    }
+
+    final private int REQUEST_CODE_ASK_PERMISSIONS = 123;
+
+    private void oh_this_really_sucks_Wrapper() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_PERM_REQUEST);
+        }
+        //int hasWriteContactsPermission = checkSelfPermission(Manifest.permission.WRITE_CONTACTS);
+        //if (hasWriteContactsPermission != PackageManager.PERMISSION_GRANTED) {
+        //    requestPermissions(new String[] {Manifest.permission.WRITE_CONTACTS},
+        //            REQUEST_CODE_ASK_PERMISSIONS);
+        //    return;
+        //}
+        //insertDummyContact();
+    }
+*/
     public void refresh(boolean notifyRefreshLayout) {
         StatusAsyncTask.destroy();
         UbuntuManifestAsyncTask.destroy();
@@ -332,6 +370,11 @@ public class MainActivity extends AppCompatActivity implements StatusAsyncTask.S
     public void onStatusTaskFinished(StatusAsyncTask.Result res) {
         for(int i = 0; i < m_fragments.length; ++i)
             m_fragments[i].onStatusTaskFinished(res);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, WRITE_EXTERNAL_PERM_REQUEST);
+        }
     }
 
     @Override

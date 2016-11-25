@@ -90,7 +90,7 @@ public class UbuntuInstallTask extends InstallAsyncTask  {
             return null;
         }
 
-        Rom rom = new Rom(Utils.getFilenameFromUrl(romPath), Rom.ROM_SECONDARY);
+        Rom rom = new Rom(Utils.getFilenameFromUrl(romPath), Rom.ROM_SECONDARY, 0, romPath, "", "", "", "", "");
         m_listener.onInstallLog(Utils.getString(R.string.installing_rom, rom.name));
 
         if(!m_multirom.initUbuntuDir(romPath)) {

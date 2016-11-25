@@ -140,7 +140,7 @@ public class RomRenameDialog extends DialogFragment implements View.OnClickListe
         }
 
         for(Rom r : m.getRoms()) {
-            if(r.name.equals(new_name)) {
+            if(r.partition_mount_path.equals(rom.partition_mount_path) && r.name.equals(new_name)) {
                 err_text.setVisibility(View.VISIBLE);
                 err_text.setText(R.string.rom_name_taken);
                 return;

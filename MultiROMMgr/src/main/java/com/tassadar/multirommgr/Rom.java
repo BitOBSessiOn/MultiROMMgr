@@ -32,13 +32,24 @@ public class Rom implements Parcelable {
     public static class NameComparator implements Comparator<Rom> {
         @Override
         public int compare(Rom a, Rom b) {
+            if (a.active != b.active) {
+                if (a.active == 1)
+                    return -1;
+
+                if (b.active == 1)
+                    return 1;
+            }
+
             if(a.type == Rom.ROM_PRIMARY)
                 return -1;
 
             if(b.type == Rom.ROM_PRIMARY)
                 return 1;
 
-            return a.name.compareToIgnoreCase(b.name);
+            if (a.partition_mount_path.equals(b.partition_mount_path))
+                return a.name.compareToIgnoreCase(b.name);
+            else
+                return a.partition_mount_path.compareTo(b.partition_mount_path);
         }
     }
 
@@ -57,18 +68,71 @@ public class Rom implements Parcelable {
         try {
             String path = MgrApp.getAppContext().getExternalFilesDir(null).getAbsolutePath();
             path = MgrApp.replaceDebugPkgName(path, true);
-            return new File(path);
+
+            File f_path = new File(path);
+            if(!f_path.exists())
+                f_path.mkdirs();
+
+            return f_path;
         } catch(NullPointerException ex) {
             ex.printStackTrace();
             return null;
         }
     }
 
+/*
     public Rom(String name, int type) {
         this.name = name;
         this.type = type;
         this.icon_id = R.drawable.romic_default;
         this.icon_hash = null;
+
+        this.base_path = "";
+        this.icon_path = "";
+        this.partition_name = "";
+        this.partition_mount_path = "";
+        this.partition_uuid = "";
+        this.partition_fs = "";
+        this.partition_info = "";
+    }
+*/
+    /*
+    public Rom(String name, int type) {
+        new Rom(name, type, "", "", "", "", "", "");
+                if (type == Rom.ROM_PRIMARY)
+                    base_path = m_path + "roms/" + INTERNAL_ROM;
+                else
+                    base_path = m_path + "roms/" + name;
+    }*/
+
+    public Rom(String name, int type,
+               int active,
+               String base_path, String icon_path,
+               String partition_name, String partition_mount_path, String partition_uuid, String partition_fs) {
+        this.name = name;
+        this.type = type;
+        this.icon_id = R.drawable.romic_default;
+        this.icon_hash = null;
+
+        this.active = active;
+        this.base_path = base_path;
+        this.icon_path = icon_path;
+        this.partition_name = partition_name;
+        this.partition_mount_path = partition_mount_path;
+        this.partition_uuid = partition_uuid;
+        this.partition_fs = partition_fs;
+
+        if (this.type == ROM_PRIMARY)
+            this.partition_info = "Primary ROM";
+        else if (this.partition_name.isEmpty())
+            this.partition_info = "Internal Storage";
+        else
+            this.partition_info = this.partition_name + " (" + this.partition_fs + ")";
+
+//        if (this.name == && this.base_path == base_path)
+//            this.active = 1;
+//        else
+//            this.active = 0;
     }
 
     public Rom(Parcel in) {
@@ -76,6 +140,21 @@ public class Rom implements Parcelable {
         this.type = in.readInt();
         this.icon_id = in.readInt();
         this.icon_hash = (String)in.readValue(String.class.getClassLoader());
+
+        this.active = in.readInt();
+        this.base_path = in.readString();
+        this.icon_path = in.readString();
+        this.partition_name = in.readString();
+        this.partition_mount_path = in.readString();
+        this.partition_uuid = in.readString();
+        this.partition_fs = in.readString();
+
+        if (this.type == ROM_PRIMARY)
+            this.partition_info = "Primary ROM";
+        else if (this.partition_name.isEmpty())
+            this.partition_info = "Internal Storage";
+        else
+            this.partition_info = this.partition_name + " (" + this.partition_fs + ")";
     }
 
     @Override
@@ -84,6 +163,14 @@ public class Rom implements Parcelable {
         dest.writeInt(this.type);
         dest.writeInt(this.icon_id);
         dest.writeValue(this.icon_hash);
+
+        dest.writeInt(this.active);
+        dest.writeString(this.base_path);
+        dest.writeString(this.icon_path);
+        dest.writeString(this.partition_name);
+        dest.writeString(this.partition_mount_path);
+        dest.writeString(this.partition_uuid);
+        dest.writeString(this.partition_fs);
     }
 
     @Override
@@ -129,6 +216,15 @@ public class Rom implements Parcelable {
     public int type;
     public int icon_id;
     public String icon_hash;
+
+    public int active;
+    public String base_path;
+    public String icon_path;
+    public String partition_name;
+    public String partition_mount_path;
+    public String partition_uuid;
+    public String partition_fs;
+    public String partition_info; // this is used to for display (eg "Internal Storage" or "mmcblk1p2 (ext4)")
 
     private Drawable m_icon;
 }
