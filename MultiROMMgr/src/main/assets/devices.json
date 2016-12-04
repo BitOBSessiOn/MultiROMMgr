@@ -698,6 +698,28 @@
                     "path": "/dev/block/platform/soc.0/f9824900.sdhci/by-name/cache"
                 }
             ]
+        },
+        {
+            "names": [ "oneplus3", "OnePlus3", "oneplus3t", "OpenPlus3T" ],
+            "ubuntu_touch": {
+                "enabled": false,
+                "base_url": ""
+            },
+            "official": true,
+            "devices": [
+                {
+                    "name": "recovery",
+                    "path": "/dev/block/platform/soc/624000.ufshc/by-name/recovery"
+                },
+                {
+                    "name": "boot",
+                    "path": "/dev/block/platform/soc/624000.ufshc/by-name/boot"
+                },
+                {
+                    "name": "cache",
+                    "path": "/dev/block/platform/soc/624000.ufshc/by-name/cache"
+                }
+            ]
         }
     ]
 }
