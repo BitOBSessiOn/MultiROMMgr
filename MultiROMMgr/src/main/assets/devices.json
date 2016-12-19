@@ -720,6 +720,28 @@
                     "path": "/dev/block/platform/soc/624000.ufshc/by-name/cache"
                 }
             ]
+        },
+        {
+            "names": [ "ham", "Z1" ],
+            "ubuntu_touch": {
+                "enabled": false,
+                "base_url": ""
+            },
+            "official": true,
+            "devices": [
+                {
+                    "name": "recovery",
+                    "path": "/dev/block/platform/msm_sdcc.1/by-name/recovery"
+                },
+                {
+                    "name": "boot",
+                    "path": "/dev/block/platform/msm_sdcc.1/by-name/boot"
+                },
+                {
+                    "name": "cache",
+                    "path": "/dev/block/platform/msm_sdcc.1/by-name/cache"
+                }
+            ]
         }
     ]
 }
